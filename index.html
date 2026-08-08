@@ -1243,6 +1243,7 @@ const I18N = {
     ui_add:"+ Add news", ui_loading:"Loading…", ui_empty:"No news yet. Check back soon.",
     ev_apply:"Apply now", ev_form:"or use the form below",
     ev_prev:"Previous", ev_next:"Next", ev_zoom:"Tap to enlarge",
+    ui_loaderr:"News couldn't be loaded right now. Please refresh the page.",
     ev_wa:'Hi IMW Putatan, I\'m interested in "{title}".',
     ui_del:"Delete", ui_confirm:"Delete this post?",
     e_name:"Please enter your full name.", e_phone:"That phone number doesn't look right. Example: 019-821 6449",
@@ -1344,6 +1345,7 @@ const I18N = {
     ui_add:"+ 新增消息", ui_loading:"载入中…", ui_empty:"暂无消息，请稍后再来。",
     ev_apply:"立即报名", ev_form:"或填写下方表格",
     ev_prev:"上一则", ev_next:"下一则", ev_zoom:"点击放大",
+    ui_loaderr:"暂时无法载入消息，请重新整理页面。",
     ev_wa:"你好 IMW Putatan，我对「{title}」有兴趣。",
     ui_del:"删除", ui_confirm:"确定删除这则消息？",
     e_name:"请输入你的全名。", e_phone:"联络号码格式不正确。例如：019-821 6449",
@@ -1373,6 +1375,7 @@ Object.assign(MS, {
   fb_ok:"Terima kasih atas maklum balas anda.", fb_need:"Sila beri penilaian atau tulis komen dahulu.",
   ev_apply:"Mohon sekarang", ev_form:"atau isi borang di bawah",
   ev_prev:"Sebelum", ev_next:"Seterusnya", ev_zoom:"Tekan untuk besarkan",
+  ui_loaderr:"Berita tidak dapat dimuatkan buat masa ini. Sila muat semula halaman.",
   ev_wa:'Hi IMW Putatan, saya berminat dengan "{title}".',
   s_rpk:"RPK / RSM", s_hill:"BUKIT", s_park:"PARKIR UNDUR", s_ram:"RAM",
   s_3pt:"3 PENJURU", s_z:"LITAR Z", s_s:"LITAR S", s_road:"JALAN RAYA A / B",
@@ -1623,10 +1626,23 @@ const DEMO_EVENTS = [
 ];
 
 async function loadEvents() {
+  // Demo slides appear ONLY when there is no backend configured.
+  // Falling back to them on a query error would disguise a real
+  // failure as the site quietly reverting to older content.
   if (!sb) return renderEvents(DEMO_EVENTS);
+
   const { data, error } = await sb.from("events")
     .select("*").order("slot", { ascending:true }).limit(SLOTS);
-  renderEvents(error ? DEMO_EVENTS : (data || []));
+
+  if (error) {
+    console.error("Could not load events from Supabase:", error);
+    listEl.classList.remove("hidden");
+    carEl.classList.add("hidden");
+    listEl.innerHTML = `<div class="empty">${esc(t("ui_loaderr"))}</div>`;
+    lastRows = [];
+    return;
+  }
+  renderEvents(data || []);
 }
 
 /* ══════════════════════════════════════════════════════════════
