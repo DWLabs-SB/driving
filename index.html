@@ -1096,8 +1096,8 @@ footer{border-top:var(--rule);padding-top:2.4rem;padding-bottom:calc(2.4rem + en
 const CONFIG = {
   whatsapp: "60198216449",          // international format, no + or spaces
   whatsappDisplay: "019-821 6449",
-  supabaseUrl: "",                  // blank = demo mode
-  supabaseKey: "",
+  supabaseUrl: "https://luubchnuxapawzxhdtsw.supabase.co",
+  supabaseKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dWJjaG51eGFwYXd6eGhkdHN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5MTA1ODksImV4cCI6MjEwMTQ4NjU4OX0.jBjYX5f_xiW8IVbp_uxTvPkQQL7J8-f6GEXKoknDNb8",
 
   // Where the enquiry form sends to:
   //   "whatsapp" — opens WhatsApp on the student's phone, pre-typed. No backend needed.
@@ -1452,16 +1452,23 @@ function wireWhatsApp() {
 /* ══════════════════════════════════════════════════════════════
    ⑤  Supabase
    ══════════════════════════════════════════════════════════════ */
+/* supabase.js sits next to this file in the repo — no CDN involved.
+   A blocked or slow third-party CDN would otherwise take the admin
+   login down with it. Falls back to a CDN only if the local file
+   is missing, so nothing breaks if it's ever left out of an upload. */
 let sb = null;
 if (CONFIG.supabaseUrl && CONFIG.supabaseKey) {
-  try {
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-    sb = createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
-  } catch (err) {
-    // Offline, or the CDN is unreachable. The page still works —
-    // WhatsApp, prices and the circuit need no backend.
-    console.warn("Supabase unavailable, running without it:", err);
+  const sources = ["./supabase.js", "https://esm.sh/@supabase/supabase-js@2"];
+  for (const src of sources) {
+    try {
+      const { createClient } = await import(src);
+      sb = createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+      break;
+    } catch (err) {
+      console.warn(`Supabase client not loaded from ${src}:`, err.message);
+    }
   }
+  if (!sb) console.warn("Running without Supabase — WhatsApp, prices and the circuit still work.");
 }
 
 const today = new Date().toISOString().slice(0, 10);
