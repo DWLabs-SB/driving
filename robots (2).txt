@@ -1,5 +1,0 @@
-User-agent: *
-Allow: /
-
-# No crawl-delay: this is a single lightweight page.
-Sitemap: https://lesenimw.com/sitemap.xml
