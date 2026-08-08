@@ -1411,8 +1411,11 @@ function setLang(next, push = true) {
   renderEvents(lastRows);
 
   if (push) {
+    // Always write the parameter on an explicit choice — including "ms".
+    // Clearing it would let the browser-language guess override the
+    // visitor's decision on the next page load.
     const u = new URL(location.href);
-    lang === "ms" ? u.searchParams.delete("lang") : u.searchParams.set("lang", lang);
+    u.searchParams.set("lang", lang);
     history.replaceState(null, "", u);
   }
 }
